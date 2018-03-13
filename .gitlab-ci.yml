@@ -3,6 +3,11 @@ stages:
   - test
   - deploy
 
+variables:
+  ARCHIVE_EXT: "tar.gz"
+  DIST_NAME: "openocd-dist-name"
+  DIST_DIR: "dist"
+
 before_script:
   # add gitlab ssh key (on Linux only)
   - >
@@ -33,28 +38,32 @@ before_script:
         --enable-ulink
     \""
 
+# Prepare release name/number
+.get_release_name: &get_release_name |
+  VER_DESC=$(git describe --always)
+  REL_NAME=openocd-esp32-${PLATFORM_NAME}-${VER_DESC}
+  DIST_NAME=${REL_NAME}.${ARCHIVE_EXT}
+  echo "PLATFORM_NAME: $PLATFORM_NAME"
+  echo "VER_DESC: $VER_DESC"
+  echo "REL_NAME: $REL_NAME"
+  echo "DIST_NAME: $DIST_NAME"
+
 build_linux:
   stage: build
   image: $CI_DOCKER_REGISTRY/esp32-toolchain
   tags:
     - build
-
+  variables:
+    PLATFORM_NAME: "linux64"
   artifacts:
     paths:
-      - dist
+      - $DIST_DIR
     expire_in: 2 weeks
-
   script:
-    - git submodule update --init
-    - ./bootstrap
-    - ./configure --prefix=$PWD/openocd-esp32 $OPENOCD_CONFIGURE_OPTS
-    - make -j `nproc`
-    - make install-strip
-    - export REL_NAME=openocd-esp32-linux64-`git describe --always`
-    - tar czvf $REL_NAME.tar.gz openocd-esp32/
-    - mkdir -p dist
-    - mv $REL_NAME.tar.gz dist/
-
+    - echo "test data" > $DIST_NAME
+    - mkdir -p $DIST_DIR
+    - mv $DIST_NAME > $DIST_DIR/
+    - echo "$DIST_NAME" > $DIST_DIR/dist_name_$PLATFORM_NAME
 
 .build_windows:
   stage: build
