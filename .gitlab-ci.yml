@@ -28,6 +28,12 @@ variables:
   echo "REL_NAME: $REL_NAME"
   echo "ARCHIVE_NAME: $ARCHIVE_NAME"
 
+.dist_archive: &dist_archive |
+  ${ARCHIVE_TOOL} ${ARCHIVE_NAME} ${DIST_INSTALLED_DIR}
+  mkdir -p ${DIST_ART_DIR}
+  mv ${ARCHIVE_NAME} ${DIST_ART_DIR}
+  echo "${ARCHIVE_NAME}" > ${DIST_ART_DIR}/dist_name_${PLATFORM_NAME}
+
 before_script:
   # add gitlab ssh key (on Linux only)
   - >
@@ -65,12 +71,12 @@ build_linux:
   image: $CI_DOCKER_REGISTRY/esp32-toolchain
   tags:
     - build
-
   artifacts:
     paths:
-      - dist
+      - ${DIST_ART_DIR}
     expire_in: 2 weeks
-
+  variables:
+    PLATFORM_NAME: "linux64"
   script:
     - *get_release_name
     - git submodule update --init
@@ -78,11 +84,7 @@ build_linux:
     - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR $OPENOCD_CONFIGURE_OPTS
     - make -j `nproc`
     - make install-strip
-    - export REL_NAME=openocd-esp32-linux64-`git describe --always`
-    - tar czvf $REL_NAME.tar.gz openocd-esp32/
-    - mkdir -p dist
-    - mv $REL_NAME.tar.gz dist/
-
+    - *dist_archive
 
 .build_windows:
   stage: build
