@@ -82,7 +82,7 @@ build_linux:
     - mv $REL_NAME.tar.gz dist/
 
 
-build_windows:
+.build_windows:
   stage: build
   image: $CI_DOCKER_REGISTRY/esp32-toolchain-win-cross
   tags:
@@ -176,7 +176,7 @@ build_windows:
     - mkdir -p dist
     - mv $REL_NAME.tar.gz dist/
 
-push_master_to_github:
+.push_master_to_github:
   stage: deploy
   only:
     - master
@@ -195,7 +195,7 @@ push_master_to_github:
     - git remote add github git@github.com:espressif/openocd-esp32.git
     - git push github HEAD:master
 
-build_test_app:
+.build_test_app:
   stage: build
   image: $CI_DOCKER_REGISTRY/esp32-ci-env
   tags:
@@ -229,7 +229,7 @@ build_test_app:
       - make V=1 ut-build-single_core
       - popd
 
-run_autotests:
+.run_autotests:
   stage: test
   image: $CI_DOCKER_REGISTRY/esp32-ci-env
   tags:
