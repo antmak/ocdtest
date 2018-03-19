@@ -95,7 +95,7 @@ build_windows:
     - mv $REL_NAME.zip dist/
 
 
-build_macos:
+.build_macos:
   stage: build
   image: $CI_DOCKER_REGISTRY/osxcross
   tags:
