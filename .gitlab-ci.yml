@@ -3,6 +3,31 @@ stages:
   - test
   - deploy
 
+variables:
+  DIST_ART_DIR: "dist"
+#  DIST_PREFIX: "${CI_PROJECT_NAME}"
+  DIST_EXT: "tar.gz"
+  DIST_INSTALLED_DIR: "${CI_PROJECT_NAME}"
+  ARCHIVE_TOOL: "tar czvf"
+  UNARCHIVE_TOOL: "tar xvf"
+  ARCHIVE_EXT: "tar.gz"
+#  ARCHIVE_NAME: "${DIST_PREFIX}-unknown.${ARCHIVE_EXT}"
+  GH_TOOL_URL: https://ci.espressif.cn:42348/cache
+  GH_TOOL_NAME: github-release
+  GH_TOOL: "./${DIST_ART_DIR}/${GH_TOOL_NAME}"
+  GITHUB_USER: antmak
+  GITHUB_REPO: "${CI_PROJECT_NAME}"
+#  RELEASE_DESC: "New release, long-awaited fixes"
+
+.get_release_name: &get_release_name |
+  REL_VERSION=$(git describe --tags | sed -n -r "s|${CI_PROJECT_NAME}-(.*)|\1|gp")
+  REL_NAME=${CI_PROJECT_NAME}-${PLATFORM_NAME}-${REL_VERSION}
+  ARCHIVE_NAME=${REL_NAME}.${DIST_EXT}
+  echo "PLATFORM_NAME: $PLATFORM_NAME"
+  echo "REL_VERSION: $REL_VERSION"
+  echo "REL_NAME: $REL_NAME"
+  echo "ARCHIVE_NAME: $ARCHIVE_NAME"
+
 before_script:
   # add gitlab ssh key (on Linux only)
   - >
@@ -45,9 +70,10 @@ build_linux:
     expire_in: 2 weeks
 
   script:
+    - *get_release_name
     - git submodule update --init
     - ./bootstrap
-    - ./configure --prefix=$PWD/openocd-esp32 $OPENOCD_CONFIGURE_OPTS
+    - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR $OPENOCD_CONFIGURE_OPTS
     - make -j `nproc`
     - make install-strip
     - export REL_NAME=openocd-esp32-linux64-`git describe --always`
