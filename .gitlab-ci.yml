@@ -35,6 +35,8 @@ variables:
   echo "${ARCHIVE_NAME}" > ${DIST_ART_DIR}/dist_name_${PLATFORM_NAME}
 
 before_script:
+  - set -o errexit; set -o pipefail; set -o nounset
+  - set -x
   # add gitlab ssh key (on Linux only)
   - >
     test $(uname -s) != "Darwin" &&
@@ -49,8 +51,6 @@ before_script:
   - git config submodule.tools/git2cl.url $GITLAB_SSH_SERVER/idf/git2cl.git
   - git config submodule.jimtcl.url $GITLAB_SSH_SERVER/idf/jimtcl.git
   - git config submodule.src/jtag/drivers/libjaylink.url $GITLAB_SSH_SERVER/idf/libjaylink.git
-  - set -o errexit; set -o pipefail; set -o nounset
-  - set -x
   # Gitlab doesn't clean submodule contents
   - (cd tools/git2cl && git clean -fxd) || true
   - (cd jimtcl && git clean -fxd) || true
