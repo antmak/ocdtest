@@ -43,6 +43,8 @@ before_script:
   - git config submodule.tools/git2cl.url $GITLAB_SSH_SERVER/idf/git2cl.git
   - git config submodule.jimtcl.url $GITLAB_SSH_SERVER/idf/jimtcl.git
   - git config submodule.src/jtag/drivers/libjaylink.url $GITLAB_SSH_SERVER/idf/libjaylink.git
+  - set -o errexit; set -o pipefail; set -o nounset
+  - set -x
   # Gitlab doesn't clean submodule contents
   - (cd tools/git2cl && git clean -fxd) || true
   - (cd jimtcl && git clean -fxd) || true
