@@ -325,7 +325,7 @@ release_tag_draft:
     - *gh_upload_archive
 
 release_master_auto:
-  stage: release_stage1
+  stage: release_submit
   only:
     - master
   when: on_success
@@ -340,6 +340,19 @@ release_master_auto:
     - *gh_upload_archive
     - PLATFORM_NAME="macos"
     - *gh_upload_archive
+
+delete_master_release:
+  stage: release_submit
+  only:
+    - master
+  <<: *release_submit_action
+  dependencies:
+    - get_gh_tools
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - GH_REL_TAG=$(git describe --tags)
+    - ${GH_TOOL} delete -s ${GITHUB_TOKEN} --tag ${GH_REL_TAG} || true
 
 Release_tag_submit:
   stage: release_submit
@@ -364,3 +377,15 @@ Pre-Release_tag_submit:
     GIT_STRATEGY: none
   script:
     - ${GH_TOOL} edit -s ${GITHUB_TOKEN} --tag ${CI_COMMIT_TAG} --description "${RELEASE_DESC}" --pre-release
+
+Delete_tag_release:
+  stage: release_submit
+  only:
+    - *release_tag_filter
+  <<: *release_submit_action
+  dependencies:
+    - get_gh_tools
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - ${GH_TOOL} delete -s ${GITHUB_TOKEN} --tag ${CI_COMMIT_TAG} || true
