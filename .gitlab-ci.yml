@@ -11,15 +11,14 @@ variables:
   # OpenOCD configuration options
   OPENOCD_CONFIGURE_OPTS: "--disable-doxygen-html --disable-doxygen-pdf --enable-ftdi --enable-jlink --enable-ulink"
 
-
   #
   # CI settings
-
+  # clone - is a nice reentrant strategy for medium size repository
   GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: none
 
   #
-  # Customize
+  # Customization of jobs
 
   DIST_ART_DIR: "dist"
 #  DIST_PREFIX: "${CI_PROJECT_NAME}"
@@ -234,8 +233,6 @@ run_autotests:
       - testing/esp/debug_backend_tests.log
     when: always
     expire_in: 1 week
-  variables:
-    GIT_STRATEGY: none
   script:
       # Run tests
       - mkdir -p dist/tmp
