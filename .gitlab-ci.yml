@@ -215,9 +215,9 @@ build_test_app:
     # Build generic test app
     - pushd testing/esp/test_apps/gen_ut_app
     - make ut-apply-config-default
-    - make V=1 ut-build-default
+    - make ut-build-default
     - make ut-apply-config-single_core
-    - make V=1 ut-build-single_core
+    - make ut-build-single_core
     - popd
 
 run_autotests:
