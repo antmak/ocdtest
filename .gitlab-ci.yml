@@ -252,7 +252,7 @@ build_test_app:
 get_gh_tools:
   stage: build
   only:
-    - *release_tag_filter
+    - /^openocd-esp32-.*$/
     - master
   artifacts:
     paths:
