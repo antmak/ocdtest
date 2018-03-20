@@ -257,6 +257,8 @@ get_gh_tools:
   artifacts:
     paths:
       - ${DIST_ART_DIR}
+  variables:
+    GIT_STRATEGY: none
   script:
     - *gh_getting_tool
     - mkdir -p ${DIST_ART_DIR}
