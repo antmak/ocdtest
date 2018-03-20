@@ -15,7 +15,7 @@ variables:
   #
   # CI settings
 
-  GIT_STRATEGY: fetch
+  GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: none
 
   #
@@ -94,7 +94,7 @@ build_linux:
   script:
     - *get_release_name
     - *add_gitlab_key
-    - git submodule update --init
+    - *submodules_mirror_update
     - ./bootstrap
     - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR $OPENOCD_CONFIGURE_OPTS
     - make -j `nproc`
@@ -117,6 +117,7 @@ build_windows:
   script:
     - *get_release_name
     - *add_gitlab_key
+    - *submodules_mirror_update
     # Build libusb-1.0
     - export LIBUSB_VER=libusb-1.0.21
     - wget https://dl.espressif.com/dl/$LIBUSB_VER.tar.gz -O $LIBUSB_VER.tar.gz
@@ -150,6 +151,8 @@ build_macos:
     PLATFORM_NAME: "macos"
   script:
     - *get_release_name
+    - *add_gitlab_key
+    - *submodules_mirror_update
     # Osxcross comes with a no-op symlink for pkg-confg,
     # remove it and install pkg-config.
     # TODO: prepare a Docker image which would have it included.
