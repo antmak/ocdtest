@@ -4,6 +4,23 @@ stages:
   - deploy
 
 variables:
+
+  #
+  # System environment
+
+  # OpenOCD configuration options
+  OPENOCD_CONFIGURE_OPTS: "--disable-doxygen-html --disable-doxygen-pdf --enable-ftdi --enable-jlink --enable-ulink"
+
+
+  #
+  # CI settings
+
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: none
+
+  #
+  # Customize
+
   DIST_ART_DIR: "dist"
 #  DIST_PREFIX: "${CI_PROJECT_NAME}"
   DIST_EXT: "tar.gz"
@@ -18,6 +35,15 @@ variables:
   GITHUB_USER: antmak
   GITHUB_REPO: "${CI_PROJECT_NAME}"
 #  RELEASE_DESC: "New release, long-awaited fixes"
+
+.submodules_mirror_update: &submodules_mirror_update |
+  # Gitlab doesn't clean submodule contents
+  git submodule foreach "git clean -d -x -f" || true
+  # Use local mirror for submodules
+  git config submodule.tools/git2cl.url $GITLAB_SSH_SERVER/idf/git2cl.git
+  git config submodule.jimtcl.url $GITLAB_SSH_SERVER/idf/jimtcl.git
+  git config submodule.src/jtag/drivers/libjaylink.url $GITLAB_SSH_SERVER/idf/libjaylink.git
+  git submodule update --init
 
 .get_release_name: &get_release_name |
   REL_VERSION=$(git describe --tags | sed -n -r "s|${CI_PROJECT_NAME}-(.*)|\1|gp")
@@ -57,20 +83,11 @@ before_script:
   - git config submodule.tools/git2cl.url $GITLAB_SSH_SERVER/idf/git2cl.git
   - git config submodule.jimtcl.url $GITLAB_SSH_SERVER/idf/jimtcl.git
   - git config submodule.src/jtag/drivers/libjaylink.url $GITLAB_SSH_SERVER/idf/libjaylink.git
-  # Gitlab doesn't clean submodule contents
   - (cd tools/git2cl && git clean -fxd) || true
   - (cd jimtcl && git clean -fxd) || true
   - (cd src/jtag/drivers/libjaylink && git clean -fxd) || true
   # remove Github remote, if configured
   - git remote rm github || true
-  # OpenOCD configuration options
-  - "export OPENOCD_CONFIGURE_OPTS=\"
-        --disable-doxygen-html
-        --disable-doxygen-pdf
-        --enable-ftdi
-        --enable-jlink
-        --enable-ulink
-    \""
 
 build_linux:
   stage: build
@@ -103,7 +120,6 @@ build_windows:
       - ${DIST_ART_DIR}
     expire_in: 2 weeks
   variables:
-    GIT_STRATEGY: fetch
     PLATFORM_NAME: "win32"
     ARCHIVE_TOOL: "zip -r"
     ARCHIVE_EXT: "zip"
@@ -140,7 +156,6 @@ build_macos:
       - ${DIST_ART_DIR}
     expire_in: 2 weeks
   variables:
-    GIT_STRATEGY: fetch
     PLATFORM_NAME: "macos"
   script:
     - *get_release_name
@@ -195,6 +210,8 @@ build_test_app:
       - testing/esp/test_apps/gen_ut_app/output/single_core/partitions_singleapp.bin
       - testing/esp/test_apps/gen_ut_app/output/single_core/bootloader/bootloader.bin
     expire_in: 2 weeks
+ variables:
+    GIT_STRATEGY: none
   script:
     - *add_gitlab_key
     # Prepare ESP-IDF
@@ -223,6 +240,8 @@ run_autotests:
       - testing/esp/debug_backend_tests.log
     when: always
     expire_in: 1 week
+  variables:
+    GIT_STRATEGY: none
   script:
       # Run tests
       - mkdir -p dist/tmp
@@ -242,7 +261,6 @@ push_master_to_github:
   image: $CI_DOCKER_REGISTRY/esp32-ci-env
   variables:
     GIT_STRATEGY: clone
-    GIT_SUBMODULE_STRATEGY: none
   before_script:
     - echo "no before script"
   script:
