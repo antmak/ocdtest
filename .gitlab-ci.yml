@@ -12,6 +12,9 @@ variables:
   #
   # System environment
 
+  # Common parameters for the 'make' during CI tests
+  MAKEFLAGS: "-j4 --no-keep-going"
+
   # OpenOCD configuration options
   OPENOCD_CONFIGURE_OPTS: "--disable-doxygen-html --disable-doxygen-pdf --enable-ftdi --enable-jlink --enable-ulink"
 
@@ -123,7 +126,7 @@ build_linux:
     - *submodules_mirror_update
     - ./bootstrap
     - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR $OPENOCD_CONFIGURE_OPTS
-    - make -j `nproc`
+    - make
     - make install-strip
     - *dist_archive
 
@@ -151,7 +154,7 @@ build_windows:
     - pushd $LIBUSB_VER
     - ./bootstrap.sh
     - ./configure --prefix=$PWD/dist --host=i686-w64-mingw32 --enable-shared=no --enable-static=yes
-    - make -j `nproc`
+    - make
     - make install-strip
     - export PKG_CONFIG_PATH=$PWD/dist/lib/pkgconfig
     - popd
@@ -159,7 +162,7 @@ build_windows:
     - git submodule update --init
     - ./bootstrap
     - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR --host=i686-w64-mingw32 $OPENOCD_CONFIGURE_OPTS
-    - make -j `nproc`
+    - make
     - make install-strip
     - cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $DIST_INSTALLED_DIR/bin/
     - *dist_archive
@@ -191,7 +194,7 @@ build_macos:
     - cp -r jimtcl jimtcl-bootstarp
     - pushd jimtcl-bootstarp/
     - ./configure --prefix=$PWD/local
-    - make -j `nproc`
+    - make
     - make install
     - popd
 
@@ -202,7 +205,7 @@ build_macos:
     - pushd $LIBUSB_VER
     - ./bootstrap.sh
     - ./configure --prefix=$PWD/dist --host=x86_64-apple-darwin12 --enable-shared=no --enable-static=yes CC=x86_64-apple-darwin12-cc
-    - make -j `nproc`
+    - make
     - make install
     - popd
 
@@ -210,7 +213,7 @@ build_macos:
     - export PKG_CONFIG_PATH=$PWD/$LIBUSB_VER/dist/lib/pkgconfig
     - ./bootstrap
     - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR --host=x86_64-apple-darwin12 $OPENOCD_CONFIGURE_OPTS LDFLAGS="-Wl,-framework,CoreFoundation -Wl,-framework,IOKit" CC=x86_64-apple-darwin12-cc
-    - make -j `nproc`
+    - make
     - make install-strip
     - *dist_archive
 
@@ -306,6 +309,7 @@ release_gh_draft:
     #INFO you could use "git push --force github refs/tags/${CI_COMMIT_TAG}:refs/tags/${CI_COMMIT_TAG}"
     # release draft
     - *gh_print_debug
+    - ${GH_TOOL} delete -s ${GITHUB_TOKEN} --tag ${CI_COMMIT_TAG} || true
     - ${GH_TOOL} release -s ${GITHUB_TOKEN} --tag ${CI_COMMIT_TAG} --draft --description "${RELEASE_DESC}"
     # Upload archives
     - PLATFORM_NAME="linux64"
