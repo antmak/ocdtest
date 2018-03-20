@@ -79,15 +79,6 @@ variables:
 before_script:
   - set -o errexit; set -o pipefail; set -o nounset
   - set -x
-  # reconfigure submodules
-  - git config submodule.tools/git2cl.url $GITLAB_SSH_SERVER/idf/git2cl.git
-  - git config submodule.jimtcl.url $GITLAB_SSH_SERVER/idf/jimtcl.git
-  - git config submodule.src/jtag/drivers/libjaylink.url $GITLAB_SSH_SERVER/idf/libjaylink.git
-  - (cd tools/git2cl && git clean -fxd) || true
-  - (cd jimtcl && git clean -fxd) || true
-  - (cd src/jtag/drivers/libjaylink && git clean -fxd) || true
-  # remove Github remote, if configured
-  - git remote rm github || true
 
 build_linux:
   stage: build
@@ -210,7 +201,7 @@ build_test_app:
       - testing/esp/test_apps/gen_ut_app/output/single_core/partitions_singleapp.bin
       - testing/esp/test_apps/gen_ut_app/output/single_core/bootloader/bootloader.bin
     expire_in: 2 weeks
- variables:
+  variables:
     GIT_STRATEGY: none
   script:
     - *add_gitlab_key
@@ -261,8 +252,6 @@ push_master_to_github:
   image: $CI_DOCKER_REGISTRY/esp32-ci-env
   variables:
     GIT_STRATEGY: clone
-  before_script:
-    - echo "no before script"
   script:
     - *add_gh_key_remote
     - git push github HEAD:master
