@@ -97,8 +97,7 @@ variables:
   ARCHIVE_NAME=$(cat ${DIST_ART_DIR}/dist_name_${PLATFORM_NAME})
   ${GH_TOOL} upload -s ${GITHUB_TOKEN} --tag ${GH_REL_TAG} -f ${DIST_ART_DIR}/${ARCHIVE_NAME} -n ${ARCHIVE_NAME}
 
-.release_tag_filter: &release_tag_filter >
-  /^openocd-esp32-.*$/
+.release_tag_filter: &release_tag_filter /^openocd-esp32-.*$/
 
 .release_submit_action: &release_submit_action
   when: manual
