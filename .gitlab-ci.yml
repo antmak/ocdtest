@@ -9,7 +9,7 @@ variables:
   DIST_EXT: "tar.gz"
   DIST_INSTALLED_DIR: "${CI_PROJECT_NAME}"
   ARCHIVE_TOOL: "tar czvf"
-  UNARCHIVE_TOOL: "tar xvf"
+#  UNARCHIVE_TOOL: "tar xvf"
   ARCHIVE_EXT: "tar.gz"
 #  ARCHIVE_NAME: "${DIST_PREFIX}-unknown.${ARCHIVE_EXT}"
   GH_TOOL_URL: https://ci.espressif.cn:42348/cache
@@ -66,7 +66,7 @@ before_script:
         --enable-ulink
     \""
 
-build_linux:
+.build_linux:
   stage: build
   image: $CI_DOCKER_REGISTRY/esp32-toolchain
   tags:
@@ -86,28 +86,29 @@ build_linux:
     - make install-strip
     - *dist_archive
 
-.build_windows:
+build_windows:
   stage: build
   image: $CI_DOCKER_REGISTRY/esp32-toolchain-win-cross
   tags:
     - build
-
   artifacts:
     paths:
-      - dist
+      - ${DIST_ART_DIR}
     expire_in: 2 weeks
-
   variables:
     GIT_STRATEGY: fetch
-
+    PLATFORM_NAME: "win32"
+    ARCHIVE_TOOL: "zip -r"
+    ARCHIVE_EXT: "zip"
   script:
+    - *get_release_name
     # Build libusb-1.0
     - export LIBUSB_VER=libusb-1.0.21
     - wget https://dl.espressif.com/dl/$LIBUSB_VER.tar.gz -O $LIBUSB_VER.tar.gz
     - tar xzf $LIBUSB_VER.tar.gz && rm $LIBUSB_VER.tar.gz
     - pushd $LIBUSB_VER
     - ./bootstrap.sh
-    - ./configure --prefix=$PWD/dist  --host=i686-w64-mingw32 --enable-shared=no --enable-static=yes
+    - ./configure --prefix=$PWD/dist --host=i686-w64-mingw32 --enable-shared=no --enable-static=yes
     - make -j `nproc`
     - make install-strip
     - export PKG_CONFIG_PATH=$PWD/dist/lib/pkgconfig
@@ -115,15 +116,11 @@ build_linux:
     # Build OpenOCD
     - git submodule update --init
     - ./bootstrap
-    - ./configure --prefix=$PWD/openocd-esp32 --host=i686-w64-mingw32 $OPENOCD_CONFIGURE_OPTS
+    - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR --host=i686-w64-mingw32 $OPENOCD_CONFIGURE_OPTS
     - make -j `nproc`
     - make install-strip
-    - cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll openocd-esp32/bin/
-    - export REL_NAME=openocd-esp32-win32-`git describe --always`
-    - zip -r $REL_NAME.zip openocd-esp32/
-    - mkdir -p dist
-    - mv $REL_NAME.zip dist/
-
+    - cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $DIST_INSTALLED_DIR/bin/
+    - *dist_archive
 
 .build_macos:
   stage: build
