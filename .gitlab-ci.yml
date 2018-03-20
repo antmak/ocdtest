@@ -101,7 +101,7 @@ variables:
 
 .release_submit_action: &release_submit_action
   when: manual
-  allow_failure: false
+  allow_failure: true
 
 before_script:
   - set -o errexit; set -o pipefail; set -o nounset
