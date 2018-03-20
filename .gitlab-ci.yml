@@ -305,6 +305,7 @@ release_tag_draft:
   stage: release_stage1
   only:
     - *release_tag_filter
+  when: on_success
   script:
     - *add_gh_key_remote
     - git push github ${CI_COMMIT_TAG}
