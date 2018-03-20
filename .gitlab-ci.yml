@@ -85,6 +85,7 @@ build_linux:
     PLATFORM_NAME: "linux64"
   script:
     - *get_release_name
+    - *add_gitlab_key
     - git submodule update --init
     - ./bootstrap
     - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR $OPENOCD_CONFIGURE_OPTS
