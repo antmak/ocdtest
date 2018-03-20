@@ -86,7 +86,7 @@ before_script:
     - make install-strip
     - *dist_archive
 
-build_windows:
+.build_windows:
   stage: build
   image: $CI_DOCKER_REGISTRY/esp32-toolchain-win-cross
   tags:
@@ -122,21 +122,20 @@ build_windows:
     - cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $DIST_INSTALLED_DIR/bin/
     - *dist_archive
 
-.build_macos:
+build_macos:
   stage: build
   image: $CI_DOCKER_REGISTRY/osxcross
   tags:
     - build
-
   artifacts:
     paths:
-      - dist
+      - ${DIST_ART_DIR}
     expire_in: 2 weeks
-
   variables:
     GIT_STRATEGY: fetch
-
+    PLATFORM_NAME: "macos"
   script:
+    - *get_release_name
     # Osxcross comes with a no-op symlink for pkg-confg,
     # remove it and install pkg-config.
     # TODO: prepare a Docker image which would have it included.
@@ -167,15 +166,10 @@ build_windows:
     # Finally, cross-compile OpenOCD
     - export PKG_CONFIG_PATH=$PWD/$LIBUSB_VER/dist/lib/pkgconfig
     - ./bootstrap
-    - ./configure --prefix=$PWD/openocd-esp32 --host=x86_64-apple-darwin12 $OPENOCD_CONFIGURE_OPTS LDFLAGS="-Wl,-framework,CoreFoundation -Wl,-framework,IOKit" CC=x86_64-apple-darwin12-cc
+    - ./configure --prefix=$PWD/$DIST_INSTALLED_DIR --host=x86_64-apple-darwin12 $OPENOCD_CONFIGURE_OPTS LDFLAGS="-Wl,-framework,CoreFoundation -Wl,-framework,IOKit" CC=x86_64-apple-darwin12-cc
     - make -j `nproc`
     - make install-strip
-
-    # Package release archive
-    - export REL_NAME=openocd-esp32-macos-`git describe --always`
-    - tar czvf $REL_NAME.tar.gz openocd-esp32/
-    - mkdir -p dist
-    - mv $REL_NAME.tar.gz dist/
+    - *dist_archive
 
 .push_master_to_github:
   stage: deploy
