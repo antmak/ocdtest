@@ -42,13 +42,13 @@ variables:
   [[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config || true
 
 .add_gh_key_remote: &add_gh_key_remote |
-  command -v ssh-agent >/dev/null || ( apt-get update -y -q && apt-get install -y -q --no-install-recommends openssh-client )
+  command -v ssh-agent >/dev/null || exit 1
   eval $(ssh-agent -s)
-  printf '%s\n' "${GH_KEY}" | tr -d '\r' | ssh-add - > /dev/null
+  printf '%s\n' "${GH_PUSH_KEY}" | tr -d '\r' | ssh-add - > /dev/null
   mkdir -p ~/.ssh && chmod 700 ~/.ssh
   [[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config || ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
   git remote remove github || true
-  git remote add github git@github.com:antmak/tryapi.git
+  git remote add github ${GH_PUSH_REPO}
 
 before_script:
   - set -o errexit; set -o pipefail; set -o nounset
@@ -108,6 +108,7 @@ build_windows:
     ARCHIVE_EXT: "zip"
   script:
     - *get_release_name
+    - *add_gitlab_key
     # Build libusb-1.0
     - export LIBUSB_VER=libusb-1.0.21
     - wget https://dl.espressif.com/dl/$LIBUSB_VER.tar.gz -O $LIBUSB_VER.tar.gz
@@ -210,7 +211,7 @@ build_test_app:
     - make V=1 ut-build-single_core
     - popd
 
-.run_autotests:
+run_autotests:
   stage: test
   image: $CI_DOCKER_REGISTRY/esp32-ci-env
   tags:
@@ -232,21 +233,17 @@ build_test_app:
       - ./run_tests.py -o $DIST_DIR/bin/openocd -s $DIST_DIR/share/openocd/scripts -a $PWD/test_apps -d 4 -l ./debug_backend_tests.log
       - popd
 
-.push_master_to_github:
+push_master_to_github:
   stage: deploy
   only:
     - master
   when: on_success
   image: $CI_DOCKER_REGISTRY/esp32-ci-env
+  variables:
+    GIT_STRATEGY: clone
+    GIT_SUBMODULE_STRATEGY: none
   before_script:
-    - echo "not switching submodules to Gitlab"
-    - git remote rm github || true
+    - echo "no before script"
   script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo -n $GH_PUSH_KEY > ~/.ssh/id_rsa_base64
-    - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-    - git remote add github git@github.com:espressif/openocd-esp32.git
+    - *add_gh_key_remote
     - git push github HEAD:master
