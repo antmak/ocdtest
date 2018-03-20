@@ -203,8 +203,6 @@ build_test_app:
       - testing/esp/test_apps/gen_ut_app/output/single_core/partitions_singleapp.bin
       - testing/esp/test_apps/gen_ut_app/output/single_core/bootloader/bootloader.bin
     expire_in: 2 weeks
-  variables:
-    GIT_STRATEGY: none
   script:
     - *add_gitlab_key
     # Prepare ESP-IDF
