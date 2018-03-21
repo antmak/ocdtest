@@ -233,7 +233,6 @@ build_test_app:
   script:
     - *add_gitlab_key
     # Prepare ESP-IDF
-    - rm -rf esp-idf
     - git clone --depth 1 $GITLAB_SSH_SERVER/idf/esp-idf.git
     - pushd esp-idf
     - tools/ci/mirror-submodule-update.sh
